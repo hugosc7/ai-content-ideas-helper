@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Ideas Helper</title>
+    <meta name="description" content="Generate high-engaging content ideas with AI for your business and audience">
+    <meta name="keywords" content="content ideas, AI content, blog ideas, content marketing, content strategy">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AI Content Ideas Helper">
+    <meta property="og:description" content="Generate high-engaging content ideas with AI">
+    <meta property="og:url" content="">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="AI Content Ideas Helper">
+    <meta property="twitter:description" content="Generate high-engaging content ideas with AI">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="./assets/index.css" as="style">
+    <link rel="preload" href="./assets/index.js" as="script">
+    
+    <!-- Critical CSS inline for faster loading -->
+    <style>
+        body {
+            margin: 0;
+            background-color: #0B0113;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #0B0113;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #D16A97;
+            border-top: 4px solid #FECE00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Load the React app -->
+    <script type="module" src="./assets/index.js"></script>
+    
+    <!-- Fallback for older browsers -->
+    <noscript>
+        <div style="text-align: center; padding: 2rem; background-color: #0B0113; color: white;">
+            <h2>JavaScript Required</h2>
+            <p>This application requires JavaScript to function. Please enable JavaScript in your browser.</p>
+        </div>
+    </noscript>
+</body>
+</html>

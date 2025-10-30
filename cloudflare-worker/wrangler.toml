@@ -1,0 +1,9 @@
+name = "ai-content-ideas-worker"
+main = "index.js"
+compatibility_date = "2023-05-18"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+# Add your OpenAI API key as a secret in Cloudflare Workers dashboard
+# wrangler secret put OPENAI_API_KEY
