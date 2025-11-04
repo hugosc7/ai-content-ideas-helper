@@ -85,11 +85,11 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, isCol
             </label>
             <div className="relative">
               <input
-                type="url"
+                type="text"
                 value={formData.websiteUrl}
                 onChange={(e) => handleChange('websiteUrl', e.target.value)}
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-yellow focus:border-transparent"
-                placeholder="https://yourwebsite.com"
+                placeholder="yourwebsite.com or https://yourwebsite.com"
                 disabled={isExtracting}
               />
               {isExtracting && (
@@ -99,7 +99,7 @@ export const InputForm: React.FC<InputFormProps> = ({ onSubmit, isLoading, isCol
               )}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              We'll automatically extract your website data to better understand your business
+              We'll automatically extract your website data to better understand your business. You can enter URLs with or without https://
             </p>
             {extractionError && (
               <p className="text-xs text-red-400 mt-1">
