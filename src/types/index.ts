@@ -6,6 +6,8 @@ export interface ContentInput {
   keyTransformation: string;
   topPerformingBlogs: string;
   additionalContext?: string;
+  userName?: string;
+  userEmail?: string;
 }
 
 export interface WebsiteData {

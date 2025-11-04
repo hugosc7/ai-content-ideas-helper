@@ -29,7 +29,8 @@ export const generateContentIdeas = async (input: ContentInput): Promise<ApiResp
 
 export const generateMoreIdeas = async (input: ContentInput, selectedIdeas: string[]): Promise<ApiResponse> => {
   try {
-    const response = await fetch(`${CLOUDFLARE_WORKER_URL}/generate-more`, {
+    // Use the same endpoint - the worker detects "generate more" by checking for selectedIdeas
+    const response = await fetch(CLOUDFLARE_WORKER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

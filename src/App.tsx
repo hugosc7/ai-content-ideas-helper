@@ -3,6 +3,7 @@ import { InputForm } from './components/InputForm';
 import { ContentIdeas } from './components/ContentIdeas';
 import { BookmarkPanel } from './components/BookmarkPanel';
 import { ProgressOverlay } from './components/ProgressOverlay';
+import { OptInModal } from './components/OptInModal';
 import { useContentGeneration } from './hooks/useContentGeneration';
 import { ContentInput } from './types';
 import { extractWebsiteData, formatWebsiteDataForAI } from './utils/websiteExtraction';
@@ -22,6 +23,8 @@ function App() {
   const [lastInput, setLastInput] = useState<ContentInput | null>(null);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [showProgressOverlay, setShowProgressOverlay] = useState(false);
+  const [showOptInModal, setShowOptInModal] = useState(false);
+  const [pendingInput, setPendingInput] = useState<ContentInput | null>(null);
   const selectedIdeas = ideas.filter(idea => idea.isBookmarked);
 
   // Collapse form when ideas are successfully generated
@@ -50,19 +53,32 @@ function App() {
 
 
   const handleGenerateIdeas = async (input: ContentInput) => {
+    // Store the input and show opt-in modal first
+    setPendingInput(input);
+    setShowOptInModal(true);
+  };
+
+  const handleOptInComplete = async (name: string, email: string) => {
+    if (!pendingInput) return;
+    
+    // Close opt-in modal and show progress overlay
+    setShowOptInModal(false);
     setShowProgressOverlay(true);
-    setLastInput(input);
+    
+    // Add user info to input
+    const inputWithUser = { ...pendingInput, userName: name, userEmail: email };
+    setLastInput(inputWithUser);
     
     // Extract website data if URL is provided
-    let enhancedInput = { ...input };
-    if (input.websiteUrl) {
+    let enhancedInput = { ...inputWithUser };
+    if (inputWithUser.websiteUrl) {
       try {
-        const websiteData = await extractWebsiteData(input.websiteUrl);
+        const websiteData = await extractWebsiteData(inputWithUser.websiteUrl);
         if (websiteData) {
           // Add extracted data to additional context
           const websiteContext = formatWebsiteDataForAI(websiteData);
           enhancedInput.additionalContext = 
-            (input.additionalContext || '') + websiteContext;
+            (inputWithUser.additionalContext || '') + websiteContext;
         }
       } catch (error) {
         console.error('Failed to extract website data:', error);
@@ -72,6 +88,7 @@ function App() {
     
     await generateIdeas(enhancedInput);
     setShowProgressOverlay(false);
+    setPendingInput(null);
   };
 
   const handleToggleFormCollapse = () => {
@@ -82,6 +99,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg-primary">
+      {showOptInModal && (
+        <OptInModal
+          onComplete={handleOptInComplete}
+          onClose={() => {
+            setShowOptInModal(false);
+            setPendingInput(null);
+          }}
+        />
+      )}
       {showProgressOverlay && isLoading && <ProgressOverlay />}
       <div className="container mx-auto px-4 py-8">
         {/* Header */}

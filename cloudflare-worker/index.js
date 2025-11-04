@@ -30,6 +30,20 @@ export default {
       // Check if this is a "generate more" request (has selectedIdeas)
       const isGenerateMore = input.selectedIdeas && input.selectedIdeas.length > 0;
       
+      // If this is initial generation (not "generate more") and user info is provided, add to Mailchimp and Google Sheets
+      // Do this in the background so it doesn't block the response
+      if (!isGenerateMore && input.userName && input.userEmail) {
+        ctx.waitUntil(
+          Promise.all([
+            addToMailchimp(input.userName, input.userEmail, env),
+            addToGoogleSheets(input, env)
+          ]).catch(err => {
+            console.error('Error adding user to Mailchimp/Google Sheets:', err);
+            // Don't throw - we don't want to fail the request if these fail
+          })
+        );
+      }
+      
       let prompt;
       if (isGenerateMore) {
         prompt = generateMoreIdeasPrompt(input);
@@ -268,4 +282,108 @@ function parseContentIdeas(content) {
   }
 
   return ideas;
+}
+
+// Add user to Mailchimp
+async function addToMailchimp(name, email, env) {
+  if (!env.MAILCHIMP_API_KEY || !env.MAILCHIMP_LIST_ID) {
+    console.log('Mailchimp credentials not configured');
+    return;
+  }
+
+  try {
+    // Extract data center from API key (format: xxxxx-us10)
+    const apiKeyParts = env.MAILCHIMP_API_KEY.split('-');
+    const dataCenter = apiKeyParts[1] || 'us10';
+    const mailchimpUrl = `https://${dataCenter}.api.mailchimp.com/3.0/lists/${env.MAILCHIMP_LIST_ID}/members`;
+
+    // Split name into first and last name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const response = await fetch(mailchimpUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.MAILCHIMP_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email_address: email,
+        status: 'subscribed',
+        merge_fields: {
+          FNAME: firstName,
+          LNAME: lastName,
+        },
+        tags: ['Content Ideas Generator']
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // If user already exists (status 400 with specific error), that's okay
+      if (errorData.title === 'Member Exists') {
+        console.log('User already exists in Mailchimp');
+        return;
+      }
+      throw new Error(`Mailchimp API error: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    console.log('Successfully added to Mailchimp');
+  } catch (error) {
+    console.error('Error adding to Mailchimp:', error);
+    throw error;
+  }
+}
+
+// Add user to Google Sheets
+// Option 1: Using Google Apps Script Web App (recommended for serverless)
+// Option 2: Using Google Sheets API v4 with Service Account (requires OAuth setup)
+async function addToGoogleSheets(input, env) {
+  // Option 1: Google Apps Script Web App (simpler, no OAuth needed)
+  if (env.GOOGLE_APPS_SCRIPT_WEBHOOK_URL) {
+    try {
+      const timestamp = new Date().toISOString();
+      const rowData = {
+        timestamp: timestamp,
+        name: input.userName || '',
+        email: input.userEmail || '',
+        businessName: input.website || '',
+        websiteUrl: input.websiteUrl || '',
+        ica: input.ica || '',
+        services: input.services || '',
+        keyTransformation: input.keyTransformation || '',
+        audienceContext: input.additionalContext || '',
+        topPerformingContentTitle: input.topPerformingBlogs || ''
+      };
+
+      const response = await fetch(env.GOOGLE_APPS_SCRIPT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rowData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google Apps Script error: ${response.status}`);
+      }
+
+      console.log('Successfully added to Google Sheets via Apps Script');
+      return;
+    } catch (error) {
+      console.error('Error adding to Google Sheets via Apps Script:', error);
+      throw error;
+    }
+  }
+
+  // Option 2: Google Sheets API v4 (requires service account setup)
+  // Note: This requires OAuth 2.0 or Service Account authentication
+  // For now, we'll skip this if no webhook URL is provided
+  if (!env.GOOGLE_SHEET_ID) {
+    console.log('Google Sheets credentials not configured');
+    return;
+  }
+
+  console.log('Google Sheets API v4 requires service account setup. Please use Google Apps Script webhook instead.');
 }
